@@ -161,4 +161,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Accessing the global storage instance that's initialized in server/index.ts
+export const storage: IStorage = (global as any).storage || new MemStorage();
