@@ -3,11 +3,27 @@ import { convertAudioToBase64, recognizeFood } from "@/lib/openai";
 import { FoodRecognitionResult } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
+// Check for internet connection
+const checkInternetConnection = async (): Promise<boolean> => {
+  try {
+    // Try to fetch a small resource to test connection
+    const response = await fetch('/favicon.ico', { 
+      method: 'HEAD',
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' } 
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+};
+
 export function useRecording() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [foodResult, setFoodResult] = useState<FoodRecognitionResult | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -34,6 +50,18 @@ export function useRecording() {
       // Start recording
       mediaRecorder.start();
       setIsRecording(true);
+      
+      // Check internet connection
+      const isOnline = await checkInternetConnection();
+      setIsOfflineMode(!isOnline);
+      
+      if (!isOnline) {
+        toast({
+          title: "Offline Mode",
+          description: "You're currently offline. You'll be able to manually enter food items after recording.",
+          duration: 5000,
+        });
+      }
     } catch (error) {
       console.error("Failed to start recording:", error);
       toast({
@@ -79,6 +107,21 @@ export function useRecording() {
         throw new Error("No audio recorded");
       }
       
+      // Check if we're in offline mode
+      const isOnline = await checkInternetConnection();
+      setIsOfflineMode(!isOnline);
+      
+      if (!isOnline) {
+        // Show manual entry dialog in offline mode
+        setFoodResult({
+          transcript: "Manual entry (offline mode)",
+          foodItems: [],
+          totalCalories: 0
+        });
+        setShowResults(true);
+        return;
+      }
+      
       // Convert audio to base64
       const base64Audio = await convertAudioToBase64(audioBlob);
       
@@ -90,11 +133,29 @@ export function useRecording() {
       setShowResults(true);
     } catch (error) {
       console.error("Failed to process recording:", error);
-      toast({
-        title: "Processing Error",
-        description: error.message || "Failed to process your recording.",
-        variant: "destructive"
-      });
+      
+      // If we get a connection error, try to fall back to offline mode
+      if (error.message && (error.message.includes("Connection") || error.message.includes("network") || error.message.includes("internet"))) {
+        setIsOfflineMode(true);
+        setFoodResult({
+          transcript: "Manual entry (offline mode)",
+          foodItems: [],
+          totalCalories: 0
+        });
+        setShowResults(true);
+        
+        toast({
+          title: "Offline Mode Activated",
+          description: "Connection to the AI service failed. You can manually add food items.",
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Processing Error",
+          description: error.message || "Failed to process your recording.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -110,6 +171,7 @@ export function useRecording() {
     isProcessing,
     foodResult,
     showResults,
+    isOfflineMode,
     startRecording,
     stopRecording,
     processRecording,

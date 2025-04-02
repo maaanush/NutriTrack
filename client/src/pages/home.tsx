@@ -19,6 +19,7 @@ export default function Home() {
     isProcessing,
     foodResult,
     showResults,
+    isOfflineMode,
     startRecording,
     processRecording,
     closeResults
@@ -70,6 +71,26 @@ export default function Home() {
     addFoodLogMutation.mutate(foodResult.foodItems);
   };
 
+  // Handle manually added food items
+  const handleManualAdd = (items: { name: string; calories: number }[]) => {
+    if (items.length === 0) return;
+    
+    // Calculate total calories
+    const totalCalories = items.reduce((sum, item) => sum + item.calories, 0);
+    
+    // Update the food result with manually entered items
+    if (foodResult) {
+      const newFoodResult = {
+        ...foodResult,
+        foodItems: items,
+        totalCalories
+      };
+      
+      // Add the manually entered food items
+      addFoodLogMutation.mutate(items);
+    }
+  };
+
   // Handle press and release for recording
   const handleRecordPress = () => {
     startRecording();
@@ -104,6 +125,8 @@ export default function Home() {
           onAdd={handleAddFood}
           onClose={closeResults}
           isPending={addFoodLogMutation.isPending}
+          isOfflineMode={isOfflineMode}
+          onManualAdd={handleManualAdd}
         />
       )}
     </div>
