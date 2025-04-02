@@ -158,6 +158,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Process audio for food recognition
   app.post("/api/food-recognition", async (req, res) => {
     try {
+      // Check if API key is available
+      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === "") {
+        return res.status(500).json({ 
+          message: "OpenAI API key not configured",
+          error: "Missing API key" 
+        });
+      }
+      
       // Validate input
       const schema = z.object({
         base64Audio: z.string(),
@@ -165,19 +173,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { base64Audio } = schema.parse(req.body);
       
+      // Verify that audio data exists
+      if (!base64Audio || base64Audio.trim() === "") {
+        return res.status(400).json({ 
+          message: "No audio recorded",
+          error: "Empty audio data" 
+        });
+      }
+      
       // Convert base64 to buffer
       const buffer = Buffer.from(base64Audio, 'base64');
       
-      // Call Whisper API for transcription
-      const transcription = await openai.audio.transcriptions.create({
-        file: {
-          data: buffer,
-          name: "recording.wav",
-        },
-        model: "whisper-1",
-      });
+      // Check if buffer has data
+      if (buffer.length === 0) {
+        return res.status(400).json({ 
+          message: "No audio recorded",
+          error: "Empty buffer" 
+        });
+      }
+      
+      // Call Whisper API for transcription with retries
+      let transcriptionError = null;
+      let transcription = null;
+      
+      // Try up to 3 times with increasing delays between retries
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          // Create a File object from the buffer for the OpenAI API
+          const blob = new Blob([buffer], { type: "audio/wav" });
+          const file = new File([blob], "recording.wav", { type: "audio/wav" });
+          
+          transcription = await openai.audio.transcriptions.create({
+            file,
+            model: "whisper-1",
+          });
+          
+          transcriptionError = null;
+          break; // Success, exit the retry loop
+        } catch (err) {
+          const error = err as Error;
+          transcriptionError = error;
+          console.log(`Transcription attempt ${attempt + 1} failed:`, error.message);
+          
+          // Wait before retrying (exponential backoff)
+          if (attempt < 2) { // Don't wait after the last attempt
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+          }
+        }
+      }
+      
+      if (transcriptionError || !transcription) {
+        throw transcriptionError || new Error("Transcription failed after multiple attempts");
+      }
       
       const transcript = transcription.text;
+      
+      if (!transcript || transcript.trim() === "") {
+        return res.status(400).json({ 
+          message: "No speech detected in the recording",
+          error: "Empty transcription" 
+        });
+      }
       
       // Use GPT-4 to identify food items and estimate calories
       const completion = await openai.chat.completions.create({

@@ -28,6 +28,15 @@ export default function RecordButton({
     };
   }, [onPress, onRelease]);
   
+  // If already recording, the button should function as a stop button
+  const handleClick = () => {
+    if (isRecording) {
+      onRelease();
+    } else {
+      onPress();
+    }
+  };
+  
   return (
     <button
       ref={buttonRef}
@@ -36,11 +45,12 @@ export default function RecordButton({
           ? 'animate-pulse bg-danger'
           : 'bg-primary'
       } text-white`}
-      onMouseDown={onPress}
-      onTouchStart={onPress}
-      onMouseUp={onRelease}
-      onTouchEnd={onRelease}
-      onMouseLeave={isRecording ? onRelease : undefined}
+      onClick={isRecording ? onRelease : undefined}
+      onMouseDown={!isRecording ? onPress : undefined}
+      onTouchStart={!isRecording ? onPress : undefined}
+      onMouseUp={!isRecording ? onRelease : undefined}
+      onTouchEnd={!isRecording ? onRelease : undefined}
+      onMouseLeave={!isRecording ? onRelease : undefined}
     >
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
@@ -49,14 +59,23 @@ export default function RecordButton({
         viewBox="0 0 24 24" 
         stroke="currentColor"
       >
-        <path 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          strokeWidth={2} 
-          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" 
-        />
+        {isRecording ? (
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" 
+          />
+        ) : (
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" 
+          />
+        )}
       </svg>
-      <span>{isRecording ? 'Recording...' : 'Hold to speak'}</span>
+      <span>{isRecording ? 'Tap to stop' : 'Hold to speak'}</span>
       
       {isRecording && (
         <span className="absolute h-full w-full animate-ping rounded-full bg-danger opacity-30"></span>
