@@ -251,21 +251,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
       });
       
-      const foodResult = JSON.parse(completion.choices[0].message.content);
+      // Parse the OpenAI response safely
+      const content = completion.choices[0].message.content || "{}";
+      const foodResult = JSON.parse(content);
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({
         transcript,
-        foodItems: foodResult.foodItems,
-        totalCalories: foodResult.totalCalories
+        foodItems: foodResult.foodItems || [],
+        totalCalories: foodResult.totalCalories || 0
       });
       
       res.json(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Food recognition error:", error);
       res.status(400).json({ 
         message: "Failed to process food recognition",
-        error: error.message 
+        error: error.message || "Unknown error" 
       });
     }
   });
@@ -314,7 +316,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
       });
       
-      const foodResult = JSON.parse(completion.choices[0].message.content);
+      // Parse the OpenAI response safely
+      const content = completion.choices[0].message.content || "{}";
+      const foodResult = JSON.parse(content);
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({
@@ -324,11 +328,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Food analysis error:", error);
       res.status(400).json({ 
         message: "Failed to analyze food description",
-        error: error.message 
+        error: error.message || "Unknown error" 
       });
     }
   });
