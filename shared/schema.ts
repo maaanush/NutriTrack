@@ -51,12 +51,12 @@ export const insertDailyCaloriesSchema = createInsertSchema(dailyCalories).pick(
 
 // Food recognition type
 export const foodRecognitionSchema = z.object({
-  transcript: z.string(),
-  foodItems: z.array(z.object({
+  items: z.array(z.object({
     name: z.string(),
     calories: z.number(),
   })),
   totalCalories: z.number(),
+  transcription: z.string().optional(),
 });
 
 // Types

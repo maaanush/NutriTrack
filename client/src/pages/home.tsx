@@ -70,7 +70,7 @@ export default function Home() {
   // Handle adding food to log
   const handleAddFood = () => {
     if (!foodResult) return;
-    addFoodLogMutation.mutate(foodResult.foodItems);
+    addFoodLogMutation.mutate(foodResult.items);
   };
 
   // Handle manually added food items

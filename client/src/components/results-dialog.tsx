@@ -21,7 +21,7 @@ export default function ResultsDialog({
   isOfflineMode = false,
   onManualAdd
 }: ResultsDialogProps) {
-  const [showManualEntry, setShowManualEntry] = useState<boolean>(isOfflineMode && result.foodItems.length === 0);
+  const [showManualEntry, setShowManualEntry] = useState<boolean>(isOfflineMode && result.items.length === 0);
   
   const handleManualAdd = (items: { name: string; calories: number }[]) => {
     if (onManualAdd) {
@@ -51,13 +51,13 @@ export default function ResultsDialog({
               </button>
             </div>
             
-            {!isOfflineMode && (
+            {!isOfflineMode && result.transcription && (
               <div className="mb-4 rounded-lg bg-neutral-100 p-3">
-                <p className="text-neutral-500">"{result.transcript}"</p>
+                <p className="text-neutral-500">"{result.transcription}"</p>
               </div>
             )}
             
-            {isOfflineMode && result.foodItems.length === 0 ? (
+            {isOfflineMode && result.items.length === 0 ? (
               <div className="mb-4 text-center">
                 <p className="text-neutral-500 mb-4">
                   You're currently offline. Please add food items manually.
@@ -72,7 +72,7 @@ export default function ResultsDialog({
             ) : (
               <>
                 <div className="mb-6 space-y-3">
-                  {result.foodItems.map((item, index) => (
+                  {result.items.map((item, index) => (
                     <div key={index} className="flex justify-between items-center p-2 border-b">
                       <div>{item.name}</div>
                       <div className="font-medium">{item.calories} kcal</div>
@@ -97,7 +97,7 @@ export default function ResultsDialog({
                   <Button 
                     className="flex-1" 
                     onClick={onAdd}
-                    disabled={isPending || (isOfflineMode && result.foodItems.length === 0)}
+                    disabled={isPending || (isOfflineMode && result.items.length === 0)}
                   >
                     Add to Log
                   </Button>

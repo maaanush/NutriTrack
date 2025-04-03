@@ -114,8 +114,8 @@ export function useRecording() {
       if (!isOnline) {
         // Show manual entry dialog in offline mode
         setFoodResult({
-          transcript: "Manual entry (offline mode)",
-          foodItems: [],
+          transcription: "Manual entry (offline mode)",
+          items: [],
           totalCalories: 0
         });
         setShowResults(true);
@@ -138,8 +138,8 @@ export function useRecording() {
       if (error.message && (error.message.includes("Connection") || error.message.includes("network") || error.message.includes("internet"))) {
         setIsOfflineMode(true);
         setFoodResult({
-          transcript: "Manual entry (offline mode)",
-          foodItems: [],
+          transcription: "Manual entry (offline mode)",
+          items: [],
           totalCalories: 0
         });
         setShowResults(true);
