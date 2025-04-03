@@ -9,6 +9,7 @@ import RecordButton from "@/components/record-button";
 import ProcessingDialog from "@/components/processing-dialog";
 import ResultsDialog from "@/components/results-dialog";
 import FoodLog from "@/components/food-log";
+import ManualEntryButton from "@/components/manual-entry-button";
 import { FoodLog as FoodLogType } from "@shared/schema";
 
 export default function Home() {
@@ -26,13 +27,13 @@ export default function Home() {
   } = useRecording();
 
   // Fetch today's food logs
-  const { data: todayLogs = [], refetch: refetchLogs } = useQuery({
+  const { data: todayLogs = [], refetch: refetchLogs } = useQuery<FoodLogType[]>({
     queryKey: [`/api/users/${user?.id}/food-logs/today`],
     enabled: !!user,
   });
 
   // Calculate today's calories
-  const todayCalories = todayLogs.reduce(
+  const todayCalories = (todayLogs as FoodLogType[]).reduce(
     (sum: number, log: FoodLogType) => sum + log.calories,
     0
   );
@@ -75,20 +76,8 @@ export default function Home() {
   const handleManualAdd = (items: { name: string; calories: number }[]) => {
     if (items.length === 0) return;
     
-    // Calculate total calories
-    const totalCalories = items.reduce((sum, item) => sum + item.calories, 0);
-    
-    // Update the food result with manually entered items
-    if (foodResult) {
-      const newFoodResult = {
-        ...foodResult,
-        foodItems: items,
-        totalCalories
-      };
-      
-      // Add the manually entered food items
-      addFoodLogMutation.mutate(items);
-    }
+    // Add the manually entered food items
+    addFoodLogMutation.mutate(items);
   };
 
   // Handle press and release for recording
@@ -107,15 +96,19 @@ export default function Home() {
         targetCalories={user?.dailyCalorieGoal || 2000}
       />
 
-      <div className="flex justify-center my-6">
+      <div className="flex flex-col items-center my-6">
         <RecordButton
           isRecording={isRecording}
           onPress={handleRecordPress}
           onRelease={handleRecordRelease}
         />
+        
+        <div className="w-64 mt-4">
+          <ManualEntryButton onAdd={handleManualAdd} />
+        </div>
       </div>
 
-      <FoodLog logs={todayLogs} />
+      <FoodLog logs={todayLogs as FoodLogType[]} />
 
       {isProcessing && <ProcessingDialog />}
       

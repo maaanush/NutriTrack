@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
+import { Plus, X, Check } from "lucide-react";
 
 interface ManualFoodEntryProps {
   onAdd: (items: { name: string; calories: number }[]) => void;
@@ -10,100 +10,119 @@ interface ManualFoodEntryProps {
 }
 
 export default function ManualFoodEntry({ onAdd, onClose }: ManualFoodEntryProps) {
-  const [foodItems, setFoodItems] = useState<{ name: string; calories: number }[]>([
-    { name: "", calories: 0 }
+  const [foodItems, setFoodItems] = useState<{ id: number; name: string; calories: string }[]>([
+    { id: 1, name: "", calories: "" },
   ]);
 
-  const handleAddItem = () => {
-    setFoodItems([...foodItems, { name: "", calories: 0 }]);
+  const addFoodItem = () => {
+    const newId = foodItems.length > 0 ? Math.max(...foodItems.map(item => item.id)) + 1 : 1;
+    setFoodItems([...foodItems, { id: newId, name: "", calories: "" }]);
   };
 
-  const handleRemoveItem = (index: number) => {
-    if (foodItems.length > 1) {
-      setFoodItems(foodItems.filter((_, i) => i !== index));
-    }
+  const removeFoodItem = (id: number) => {
+    if (foodItems.length === 1) return; // Keep at least one item
+    setFoodItems(foodItems.filter((item) => item.id !== id));
   };
 
-  const handleNameChange = (index: number, value: string) => {
-    const newItems = [...foodItems];
-    newItems[index].name = value;
-    setFoodItems(newItems);
+  const updateFoodItem = (id: number, field: "name" | "calories", value: string) => {
+    setFoodItems(
+      foodItems.map((item) => 
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    );
   };
 
-  const handleCaloriesChange = (index: number, value: string) => {
-    const newItems = [...foodItems];
-    newItems[index].calories = parseInt(value) || 0;
-    setFoodItems(newItems);
-  };
-
-  const handleSubmit = () => {
-    // Filter out empty items
-    const validItems = foodItems.filter(item => item.name.trim() !== "" && item.calories > 0);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (validItems.length === 0) {
-      return; // Don't submit if no valid items
-    }
+    // Validate and convert data
+    const validItems = foodItems
+      .filter(item => item.name.trim() && !isNaN(Number(item.calories)))
+      .map(item => ({
+        name: item.name.trim(),
+        calories: parseInt(item.calories)
+      }));
+    
+    if (validItems.length === 0) return;
     
     onAdd(validItems);
   };
 
   return (
     <div className="space-y-4">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-medium">Manual Food Entry</h3>
-        <p className="text-sm text-muted-foreground">
-          You're in offline mode. Add your food items manually.
-        </p>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Add Food Items</h2>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
       </div>
-
-      <div className="space-y-2">
-        {foodItems.map((item, index) => (
-          <div key={index} className="flex items-center space-x-2">
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {foodItems.map((item) => (
+          <div key={item.id} className="flex items-end gap-2">
             <div className="flex-1">
-              <Label htmlFor={`food-name-${index}`}>Food</Label>
+              <Label htmlFor={`food-name-${item.id}`} className="text-xs">
+                Food Item
+              </Label>
               <Input
-                id={`food-name-${index}`}
+                id={`food-name-${item.id}`}
                 value={item.name}
-                onChange={(e) => handleNameChange(index, e.target.value)}
+                onChange={(e) => updateFoodItem(item.id, "name", e.target.value)}
                 placeholder="e.g., Apple"
+                required
               />
             </div>
+            
             <div className="w-24">
-              <Label htmlFor={`calories-${index}`}>Calories</Label>
+              <Label htmlFor={`calories-${item.id}`} className="text-xs">
+                Calories
+              </Label>
               <Input
-                id={`calories-${index}`}
+                id={`calories-${item.id}`}
+                value={item.calories}
+                onChange={(e) => updateFoodItem(item.id, "calories", e.target.value)}
+                placeholder="e.g., 95"
                 type="number"
-                value={item.calories || ""}
-                onChange={(e) => handleCaloriesChange(index, e.target.value)}
-                placeholder="95"
+                min="0"
+                required
               />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="mt-6"
-              onClick={() => handleRemoveItem(index)}
-              disabled={foodItems.length === 1}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            
+            {foodItems.length > 1 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeFoodItem(item.id)}
+                className="mb-0.5"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         ))}
-      </div>
-
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={handleAddItem}>
+        
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={addFoodItem}
+          className="w-full"
+        >
+          <Plus className="mr-2 h-4 w-4" />
           Add Another Item
         </Button>
-        <div className="space-x-2">
-          <Button variant="ghost" onClick={onClose}>
+        
+        <div className="flex gap-2 pt-2">
+          <Button type="button" variant="outline" className="w-1/2" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
-            Save Items
+          <Button type="submit" className="w-1/2">
+            <Check className="mr-2 h-4 w-4" />
+            Save
           </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
