@@ -17,7 +17,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.createUser(req.body);
       res.json(user);
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(400).json({ message: errorMessage });
     }
   });
 
@@ -30,7 +31,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(user);
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(400).json({ message: errorMessage });
     }
   });
 
@@ -251,7 +253,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
       });
       
-      const foodResult = JSON.parse(completion.choices[0].message.content);
+      const content = completion.choices[0].message.content;
+      if (!content) {
+        throw new Error("Empty response from OpenAI");
+      }
+      
+      const foodResult = JSON.parse(content);
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({
@@ -314,7 +321,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
       });
       
-      const foodResult = JSON.parse(completion.choices[0].message.content);
+      const content = completion.choices[0].message.content;
+      if (!content) {
+        throw new Error("Empty response from OpenAI");
+      }
+      
+      const foodResult = JSON.parse(content);
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({

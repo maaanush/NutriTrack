@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { X, Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { FoodRecognitionResult } from "@shared/schema";
 
 interface NaturalLanguageFoodEntryProps {
   onAdd: (items: { name: string; calories: number }[]) => void;
@@ -11,95 +12,120 @@ interface NaturalLanguageFoodEntryProps {
 }
 
 export default function NaturalLanguageFoodEntry({ onAdd, onClose }: NaturalLanguageFoodEntryProps) {
-  const [foodText, setFoodText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [foodDescription, setFoodDescription] = useState("");
+  const [isPending, setIsPending] = useState(false);
+  const [results, setResults] = useState<{ name: string; calories: number }[] | null>(null);
+  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!foodText.trim()) {
-      setError("Please enter what you ate.");
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFoodDescription(e.target.value);
+  };
+
+  const analyzeFood = async () => {
+    if (!foodDescription.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a food description",
+        variant: "destructive",
+      });
       return;
     }
-    
-    setIsLoading(true);
-    setError(null);
-    
+
+    setIsPending(true);
+    setResults(null);
+
     try {
-      // Call the API to analyze the food text
-      const response = await apiRequest("POST", "/api/analyze-food", {
-        foodText: foodText.trim()
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to analyze food text");
+      const result = await apiRequest(
+        "POST",
+        "/api/analyze-food",
+        { foodText: foodDescription }
+      ) as FoodRecognitionResult;
+
+      if (result.foodItems.length === 0) {
+        toast({
+          title: "No food items found",
+          description: "Could not recognize any food items in your description. Please try again with more details.",
+          variant: "destructive",
+        });
+        setIsPending(false);
+        return;
       }
-      
-      const result = await response.json();
-      
-      // Pass the food items to the parent component
-      onAdd(result.foodItems);
-    } catch (err) {
-      console.error("Error analyzing food:", err);
-      setError("Failed to analyze food. Please try again or use manual entry.");
+
+      setResults(result.foodItems);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to analyze food: ${error instanceof Error ? error.message : "Unknown error"}`,
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setIsPending(false);
+    }
+  };
+
+  const handleAdd = () => {
+    if (results && results.length > 0) {
+      onAdd(results);
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Add What You Ate</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="food-text" className="mb-2 block">
-            Describe what you ate in natural language:
-          </Label>
-          <Textarea
-            id="food-text"
-            value={foodText}
-            onChange={(e) => setFoodText(e.target.value)}
-            placeholder="e.g., I had 2 slices of wheat bread with 1 tbsp of peanut butter, a medium apple, and a glass of orange juice."
-            className="min-h-24"
-            required
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Be as specific as possible with quantities and types of food for accurate calorie estimation.
-          </p>
+      <div className="space-y-2">
+        <Textarea
+          placeholder="Describe what you ate (e.g., 'I had 2 slices of whole wheat toast with avocado and an apple')"
+          className="min-h-[100px]"
+          value={foodDescription}
+          onChange={handleTextChange}
+          disabled={isPending}
+        />
+        <div className="flex justify-end">
+          <Button
+            onClick={analyzeFood}
+            disabled={!foodDescription.trim() || isPending}
+            className="ml-auto"
+          >
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Analyze
+          </Button>
         </div>
-        
-        {error && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-500">
-            {error}
+      </div>
+
+      {results && results.length > 0 && (
+        <div className="border rounded-md p-4 space-y-4">
+          <h3 className="font-medium">Recognized Food Items:</h3>
+          <ul className="space-y-2">
+            {results.map((item, index) => (
+              <li key={index} className="flex justify-between items-center">
+                <span>{item.name}</span>
+                <span className="font-semibold">{item.calories} cal</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex justify-between pt-2 border-t">
+            <span className="font-medium">Total Calories:</span>
+            <span className="font-bold">
+              {results.reduce((sum, item) => sum + item.calories, 0)} cal
+            </span>
           </div>
-        )}
-        
-        <div className="flex gap-2 pt-2">
-          <Button type="button" variant="outline" className="w-1/2" onClick={onClose}>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleAdd}>
+              Add to Log
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!results && !isPending && (
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" className="w-1/2" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Analyze & Add
-              </>
-            )}
-          </Button>
         </div>
-      </form>
+      )}
     </div>
   );
 }
