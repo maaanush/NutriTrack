@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system",
-            content: "You are a nutrition expert. Identify the food items mentioned in the transcribed text and estimate their calorie content. Provide the results in JSON format with the following structure: { foodItems: [{ name: string, calories: number }], totalCalories: number }"
+            content: "You are a nutrition expert. Identify the food items mentioned in the transcribed text and estimate their calorie content. Provide the results in JSON format with the following structure: { items: [{ name: string, calories: number }], totalCalories: number }"
           },
           {
             role: "user",
@@ -257,8 +257,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({
-        transcript,
-        foodItems: foodResult.foodItems || [],
+        transcription: transcript,
+        items: foodResult.items || [],
         totalCalories: foodResult.totalCalories || 0
       });
       
@@ -302,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             Break down meals into individual components for more accurate tracking.
             Format your response as valid JSON with this structure:
             { 
-              "foodItems": [
+              "items": [
                 { "name": "food item 1", "calories": estimated_calories_as_number }, 
                 { "name": "food item 2", "calories": estimated_calories_as_number }
               ], 
@@ -322,8 +322,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({
-        transcript: foodText,
-        foodItems: foodResult.foodItems || [],
+        transcription: foodText,
+        items: foodResult.items || [],
         totalCalories: foodResult.totalCalories || 0
       });
       
