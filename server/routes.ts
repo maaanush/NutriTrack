@@ -269,6 +269,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Analyze food from text input
+  app.post("/api/analyze-food", async (req, res) => {
+    try {
+      // Check if API key is available
+      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === "") {
+        return res.status(500).json({ 
+          message: "OpenAI API key not configured",
+          error: "Missing API key" 
+        });
+      }
+      
+      // Validate input
+      const schema = z.object({
+        foodText: z.string().min(1, "Please enter what you ate")
+      });
+      
+      const { foodText } = schema.parse(req.body);
+      
+      // Use GPT-4o to analyze the food description and estimate calories
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: `You are a nutrition expert. Analyze the user's food description and provide detailed calorie content.
+            Extract all food items mentioned and estimate their calories accurately.
+            Break down meals into individual components for more accurate tracking.
+            Format your response as valid JSON with this structure:
+            { 
+              "foodItems": [
+                { "name": "food item 1", "calories": estimated_calories_as_number }, 
+                { "name": "food item 2", "calories": estimated_calories_as_number }
+              ], 
+              "totalCalories": sum_of_all_calories 
+            }`
+          },
+          {
+            role: "user",
+            content: `Analyze this food description and provide calorie estimates: "${foodText}"`
+          }
+        ],
+      });
+      
+      const foodResult = JSON.parse(completion.choices[0].message.content);
+      
+      // Validate the response against our schema
+      const response = foodRecognitionSchema.parse({
+        transcript: foodText,
+        foodItems: foodResult.foodItems || [],
+        totalCalories: foodResult.totalCalories || 0
+      });
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Food analysis error:", error);
+      res.status(400).json({ 
+        message: "Failed to analyze food description",
+        error: error.message 
+      });
+    }
+  });
 
   const httpServer = createServer(app);
 

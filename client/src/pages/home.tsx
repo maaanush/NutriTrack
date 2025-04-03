@@ -10,6 +10,7 @@ import ProcessingDialog from "@/components/processing-dialog";
 import ResultsDialog from "@/components/results-dialog";
 import FoodLog from "@/components/food-log";
 import ManualEntryButton from "@/components/manual-entry-button";
+import NaturalLanguageButton from "@/components/natural-language-button";
 import { FoodLog as FoodLogType } from "@shared/schema";
 
 export default function Home() {
@@ -103,8 +104,11 @@ export default function Home() {
           onRelease={handleRecordRelease}
         />
         
-        <div className="w-64 mt-4">
+        <div className="w-64 mt-4 space-y-2">
           <ManualEntryButton onAdd={handleManualAdd} />
+          
+          {/* Import the NaturalLanguageButton here */}
+          <NaturalLanguageButton onAdd={handleManualAdd} />
         </div>
       </div>
 
