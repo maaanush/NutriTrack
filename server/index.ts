@@ -1,8 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeDatabase, PgStorage } from "./db";
 import { IStorage } from "./storage";
-import { JsonStorage } from "./json-storage";
 
 const app = express();
 app.use(express.json());
@@ -40,17 +40,21 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Create the JSON storage instance
-    log("Initializing JSON storage...", "server");
-    const storage: IStorage = new JsonStorage();
+    // Initialize the database and create default user
+    log("Initializing database...", "server");
+    await initializeDatabase();
+    log("Database initialized successfully", "server");
+    
+    // Create the PostgreSQL storage instance
+    const storage: IStorage = new PgStorage();
     
     // Make storage available globally
     (global as any).storage = storage;
     
-    log("JSON storage initialized", "server");
+    log("PostgreSQL storage initialized", "server");
   } catch (error: any) {
-    log(`Storage initialization error: ${error.message || 'Unknown error'}`, "server");
-    console.error("Storage initialization error:", error);
+    log(`Database initialization error: ${error.message || 'Unknown error'}`, "server");
+    console.error("Database initialization error:", error);
   }
 
   const server = await registerRoutes(app);

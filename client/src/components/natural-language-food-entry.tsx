@@ -39,7 +39,7 @@ export default function NaturalLanguageFoodEntry({ onAdd, onClose }: NaturalLang
       const result = await response.json();
       
       // Pass the food items to the parent component
-      onAdd(result.items);
+      onAdd(result.foodItems);
     } catch (err) {
       console.error("Error analyzing food:", err);
       setError("Failed to analyze food. Please try again or use manual entry.");

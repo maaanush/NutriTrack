@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system",
-            content: "You are a nutrition expert. Identify the food items mentioned in the transcribed text and estimate their calorie content. Provide the results in JSON format with the following structure: { items: [{ name: string, calories: number }], totalCalories: number }"
+            content: "You are a nutrition expert. Identify the food items mentioned in the transcribed text and estimate their calorie content. Provide the results in JSON format with the following structure: { foodItems: [{ name: string, calories: number }], totalCalories: number }"
           },
           {
             role: "user",
@@ -251,23 +251,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
       });
       
-      // Parse the OpenAI response safely
-      const content = completion.choices[0].message.content || "{}";
-      const foodResult = JSON.parse(content);
+      const foodResult = JSON.parse(completion.choices[0].message.content);
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({
-        transcription: transcript,
-        items: foodResult.items || [],
-        totalCalories: foodResult.totalCalories || 0
+        transcript,
+        foodItems: foodResult.foodItems,
+        totalCalories: foodResult.totalCalories
       });
       
       res.json(response);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Food recognition error:", error);
       res.status(400).json({ 
         message: "Failed to process food recognition",
-        error: error.message || "Unknown error" 
+        error: error.message 
       });
     }
   });
@@ -302,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             Break down meals into individual components for more accurate tracking.
             Format your response as valid JSON with this structure:
             { 
-              "items": [
+              "foodItems": [
                 { "name": "food item 1", "calories": estimated_calories_as_number }, 
                 { "name": "food item 2", "calories": estimated_calories_as_number }
               ], 
@@ -316,23 +314,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ],
       });
       
-      // Parse the OpenAI response safely
-      const content = completion.choices[0].message.content || "{}";
-      const foodResult = JSON.parse(content);
+      const foodResult = JSON.parse(completion.choices[0].message.content);
       
       // Validate the response against our schema
       const response = foodRecognitionSchema.parse({
-        transcription: foodText,
-        items: foodResult.items || [],
+        transcript: foodText,
+        foodItems: foodResult.foodItems || [],
         totalCalories: foodResult.totalCalories || 0
       });
       
       res.json(response);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Food analysis error:", error);
       res.status(400).json({ 
         message: "Failed to analyze food description",
-        error: error.message || "Unknown error" 
+        error: error.message 
       });
     }
   });
