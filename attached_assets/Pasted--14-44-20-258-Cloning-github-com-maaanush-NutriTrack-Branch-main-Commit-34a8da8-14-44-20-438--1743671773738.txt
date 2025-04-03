@@ -1,0 +1,48 @@
+[14:44:20.258] Cloning github.com/maaanush/NutriTrack (Branch: main, Commit: 34a8da8)
+[14:44:20.438] Previous build caches not available
+[14:44:20.676] Cloning completed: 418.000ms
+[14:44:20.891] Running build in Washington, D.C., USA (East) – iad1
+[14:44:21.046] Running "vercel build"
+[14:44:21.420] Vercel CLI 41.4.1
+[14:44:21.532] WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
+[14:44:22.088] Installing dependencies...
+[14:44:26.695] npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+[14:44:26.707] npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+[14:44:31.819] 
+[14:44:31.820] added 503 packages in 9s
+[14:44:31.820] 
+[14:44:31.820] 61 packages are looking for funding
+[14:44:31.821]   run `npm fund` for details
+[14:44:32.071] Using TypeScript 5.6.3 (local user-provided)
+[14:44:39.075] Using TypeScript 5.6.3 (local user-provided)
+[14:44:40.898] Using TypeScript 5.6.3 (local user-provided)
+[14:44:41.548] Using TypeScript 5.6.3 (local user-provided)
+[14:44:42.065] api/analyze-food.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:42.066] 
+[14:44:42.961] Using TypeScript 5.6.3 (local user-provided)
+[14:44:43.417] api/food-recognition.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:43.418] 
+[14:44:44.285] Using TypeScript 5.6.3 (local user-provided)
+[14:44:44.670] api/login.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:44.670] 
+[14:44:45.196] Using TypeScript 5.6.3 (local user-provided)
+[14:44:45.451] api/users/[id]/daily-calories/index.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:45.453] 
+[14:44:45.963] Using TypeScript 5.6.3 (local user-provided)
+[14:44:46.430] api/users/[id]/food-logs/index.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:46.431] api/users/[id]/food-logs/index.ts(3,10): error TS2305: Module '"../../../_lib/schema"' has no exported member 'insertFoodLogSchema'.
+[14:44:46.431] 
+[14:44:46.883] Using TypeScript 5.6.3 (local user-provided)
+[14:44:47.122] api/users/[id]/food-logs/today.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:47.123] 
+[14:44:47.567] Using TypeScript 5.6.3 (local user-provided)
+[14:44:47.798] api/users/[id]/index.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:47.798] 
+[14:44:48.258] Using TypeScript 5.6.3 (local user-provided)
+[14:44:48.667] api/users/index.ts(1,49): error TS2307: Cannot find module 'next' or its corresponding type declarations.
+[14:44:48.668] api/users/index.ts(3,10): error TS2305: Module '"../_lib/schema"' has no exported member 'insertUserSchema'.
+[14:44:48.668] 
+[14:44:49.186] Build Completed in /vercel/output [27s]
+[14:44:49.676] Deploying outputs...
+[14:44:58.418] 
+[14:44:58.684] Deployment completed
